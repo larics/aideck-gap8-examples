@@ -46,7 +46,7 @@ static pi_buffer_t buffer;
 static EventGroupHandle_t evGroup;
 #define CAPTURE_DONE_BIT (1 << 0)
 
-// Performance measuring variables
+// Performance menasuring variables
 static uint32_t start = 0;
 static uint32_t captureTime = 0;
 static uint32_t transferTime = 0;
@@ -143,7 +143,7 @@ uint32_t footerSize;
 pi_buffer_t jpeg_data;
 uint32_t jpegSize;
 
-static StreamerMode_t streamerMode = RAW_ENCODING;
+static StreamerMode_t streamerMode = JPEG_ENCODING;
 
 static CPXPacket_t txp;
 
@@ -302,6 +302,17 @@ void camera_task(void *parameters)
         cpxSendPacketBlocking(&txp);
 
         transferTime = xTaskGetTickCount() - start;
+
+        // Total time taken for capture + processing
+        uint32_t totalTime = captureTime + encodingTime + transferTime;
+
+        // Target frame duration in ticks (333ms)
+        const uint32_t targetFrameTime = 333 / portTICK_PERIOD_MS;
+
+        if (totalTime < targetFrameTime) {
+            vTaskDelay(targetFrameTime - totalTime);
+        }
+
       }
       else
       {
